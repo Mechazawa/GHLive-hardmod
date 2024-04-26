@@ -28,6 +28,22 @@
 
 BleGamepad bleGamepad;
 
+uint_fast16_t whammyBuffer[WHAMMY_BUFFER_SIZE] = {};
+uint_fast32_t whammyBucket = 0;
+auto whammyBufferIndex = 0;
+
+uint16_t tickWhammy(uint_fast16_t input) {
+  input = input <= 2048 ? input : 2048 - (input - 2048);
+
+  whammyBucket -= whammyBuffer[whammyBufferIndex];
+  whammyBuffer[whammyBufferIndex] = input;
+  whammyBucket += input;
+
+  whammyBufferIndex = (whammyBufferIndex + 1) % WHAMMY_BUFFER_SIZE;
+
+  return (uint16_t)(whammyBucket / WHAMMY_BUFFER_SIZE);
+}
+
 void monitorButtons() {
   for (auto button: BUTTON_MAP) {
     auto pressed = digitalRead(button.gpio);
@@ -42,52 +58,65 @@ void monitorButtons() {
 
 void setup()
 {
-    Serial.begin(115200);
-    Serial.println("Configuring GPIO");
-
     for(auto button: BUTTON_MAP) {
       pinMode(button.gpio, INPUT_PULLDOWN);
     }
 
     for (auto pin: PLAYER_LEDS) {
-      pinMode(pin, OUTPUT_OPEN_DRAIN);
+      pinMode(pin, OUTPUT);
     }
 
-    for(int i = 0; i < 3; i++) {
-      for (auto pin: PLAYER_LEDS) {
-        digitalWrite(pin, HIGH);
-      }
-      // delay(300);
-      // for (auto pin: PLAYER_LEDS) {
-      //   digitalWrite(pin, LOW);
-      // }
-      // delay(300);
-    }
+    // for(int i = 0; i < 3; i++) {
+    //   for (auto pin: PLAYER_LEDS) {
+    //     digitalWrite(pin, HIGH);
+    //   }
+    //   delay(300);
+    //   for (auto pin: PLAYER_LEDS) {
+    //     digitalWrite(pin, LOW);
+    //   }
+    //   delay(300);
+    // }
 
-    Serial.println("Starting BLE work!");
-    bleGamepad.begin();
+    // Whammy shenanigans
+    // pinMode(WHAMMY.gpio, ANALOG);
+    // analogReadResolution(12);
+
+    auto* config = new BleGamepadConfiguration();
+
+    config->setAutoReport(false);
+    config->setControllerType(CONTROLLER_TYPE_GAMEPAD);
+    config->setButtonCount(20);
+    config->setAxesMax(4096);
+    config->setAxesMin(0);
+    config->setWhichAxes(true, true, true, true, false, false, false, false);
+
+    bleGamepad.deviceName = "GHLive Controller";
+    bleGamepad.begin(config);
     // The default bleGamepad.begin() above enables 16 buttons, all axes, one hat, and no simulation controls or special buttons
 }
 
+unsigned long lastBatteryCheck = 0;
+const auto batteryMin = 2.4;
+const auto batteryMax = 3.2;
+
 void loop()
 {
+    // unsigned long now = millis();
+    // if (lastBatteryCheck + 1000 < now) {
+    //   lastBatteryCheck = now;
+    //   // messed up wiring coming in handy I guess
+    //   float voltage = analogReadMilliVolts(WHAMMY.gpio) * (3.3 / 4095.0) * 2;
+    //   float percentage = (voltage - batteryMin) / (batteryMax - batteryMin) * 100;
+    //   bleGamepad.setBatteryLevel(constrain(percentage, 0, 100)); 
+    // }
+
     if (bleGamepad.isConnected())
     {
         // digitalWrite(PLAYER_LEDS[0], HIGH);
         monitorButtons();
-        // Serial.println("Press buttons 5, 16 and start. Move all enabled axes to max. Set DPAD (hat 1) to down right.");
-        // bleGamepad.press(BUTTON_5);
-        // bleGamepad.press(BUTTON_16);
-        // bleGamepad.pressStart();
-        // bleGamepad.setAxes(32767, 32767, 32767, 32767, 32767, 32767, 32767, 32767);
-        // bleGamepad.setHat1(HAT_DOWN_RIGHT);
-        // // All axes, sliders, hats etc can also be set independently. See the IndividualAxes.ino example
-        // delay(500);
+        // bleGamepad.setAxes(tickWhammy(analogRead(WHAMMY.gpio)), 0, 0, 0, 0, 0, 0, 0);
+        // bleGamepad.setAxes(analogReadMilliVolts(WHAMMY.gpio), 0, tickWhammy(analogRead(WHAMMY.gpio)), 0, 0, 0, 0, 0);
 
-        // Serial.println("Release button 5 and start. Move all axes to min. Set DPAD (hat 1) to centred.");
-        // bleGamepad.release(BUTTON_5);
-        // bleGamepad.releaseStart();
-        // bleGamepad.setHat1(HAT_CENTERED);
-        // bleGamepad.setAxes(0, 0, 0, 0, 0, 0, 0, 0);
+        bleGamepad.sendReport();
     }
 }

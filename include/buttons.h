@@ -8,7 +8,9 @@ typedef struct
 } ButtonDef;
 
 // GPIO 2 === Whammy ADC
-
+const auto POWER_BUTTON = BUTTON_8;
+const ButtonDef WHAMMY = {X_AXIS, 2};
+const u16_t WHAMMY_BUFFER_SIZE = 32;
 const ButtonDef BUTTON_MAP[] = {
     {BUTTON_1, 14}, // W1
     {BUTTON_2, 9},  // W2
@@ -17,8 +19,7 @@ const ButtonDef BUTTON_MAP[] = {
     {BUTTON_5, 11}, // B2
     {BUTTON_6, 13}, // B3
 
-    // {BUTTON_17, 1}, // Wake (power)
-    {BUTTON_8, 4},
+    {BUTTON_8, 1}, // wake (power)
     {BUTTON_9, 5},
     {BUTTON_10, 6},
     {BUTTON_11, 7},
