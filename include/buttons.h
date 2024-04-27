@@ -7,6 +7,7 @@ typedef struct
     uint8_t gpio;
 } ButtonDef;
 
+const auto DISCONNECT_BUTTON = GPIO_NUM_1;
 const auto POWER_BUTTON_GPIO = GPIO_NUM_4;
 const u16_t WHAMMY_GPIO = 2;
 const u16_t WHAMMY_BUFFER_SIZE = 32;
@@ -18,7 +19,7 @@ const ButtonDef BUTTON_MAP[] = {
     {BUTTON_5, 11}, // B2
     {BUTTON_6, 13}, // B3
 
-    {BUTTON_8, 1}, // wake (power)
+    {BUTTON_8, 1},
     {BUTTON_9, 5},
     {BUTTON_10, 6},
     {BUTTON_11, 7},
@@ -32,5 +33,4 @@ const ButtonDef BUTTON_MAP[] = {
 };
 
 const char BATTERY_GPIO = 16;
-const char PLAYER_LEDS[] = {
-    35, 36, 44, 43};
+const char PLAYER_LEDS[] = {35, 36, 44, 43};
