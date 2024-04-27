@@ -3,13 +3,12 @@
 
 typedef struct
 {
-  uint8_t gamepad;
-  uint8_t gpio;
+    uint8_t gamepad;
+    uint8_t gpio;
 } ButtonDef;
 
-// GPIO 2 === Whammy ADC
-const auto POWER_BUTTON = BUTTON_8;
-const ButtonDef WHAMMY = {X_AXIS, 2};
+const auto POWER_BUTTON_GPIO = GPIO_NUM_4;
+const u16_t WHAMMY_GPIO = 2;
 const u16_t WHAMMY_BUFFER_SIZE = 32;
 const ButtonDef BUTTON_MAP[] = {
     {BUTTON_1, 14}, // W1
@@ -26,12 +25,12 @@ const ButtonDef BUTTON_MAP[] = {
     {BUTTON_12, 4},
     {BUTTON_13, 12},
 
-    {BUTTON_14, 16},
+    {BUTTON_14, 21},
     {BUTTON_15, 17},
     {BUTTON_16, 15},
     {BUTTON_7, 18},
 };
 
+const char BATTERY_GPIO = 16;
 const char PLAYER_LEDS[] = {
-    35, 36, 44, 43
-};
+    35, 36, 44, 43};

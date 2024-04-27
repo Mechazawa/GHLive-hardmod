@@ -28,95 +28,150 @@
 
 BleGamepad bleGamepad;
 
-uint_fast16_t whammyBuffer[WHAMMY_BUFFER_SIZE] = {};
-uint_fast32_t whammyBucket = 0;
-auto whammyBufferIndex = 0;
+bool tickButtons()
+{
+  bool changedState = false;
 
-uint16_t tickWhammy(uint_fast16_t input) {
-  input = input <= 2048 ? input : 2048 - (input - 2048);
-
-  whammyBucket -= whammyBuffer[whammyBufferIndex];
-  whammyBuffer[whammyBufferIndex] = input;
-  whammyBucket += input;
-
-  whammyBufferIndex = (whammyBufferIndex + 1) % WHAMMY_BUFFER_SIZE;
-
-  return (uint16_t)(whammyBucket / WHAMMY_BUFFER_SIZE);
-}
-
-void monitorButtons() {
-  for (auto button: BUTTON_MAP) {
+  for (auto button : BUTTON_MAP)
+  {
     auto pressed = digitalRead(button.gpio);
 
-    if (pressed && !bleGamepad.isPressed(button.gamepad)) {
+    if (pressed && !bleGamepad.isPressed(button.gamepad))
+    {
       bleGamepad.press(button.gamepad);
-    } else if (!pressed && bleGamepad.isPressed(button.gamepad)) {
+
+      changedState = true;
+    }
+    else if (!pressed && bleGamepad.isPressed(button.gamepad))
+    {
       bleGamepad.release(button.gamepad);
+
+      changedState = true;
     }
   }
+
+  return changedState;
 }
 
 void setup()
 {
-    for(auto button: BUTTON_MAP) {
-      pinMode(button.gpio, INPUT_PULLDOWN);
-    }
+  for (auto button : BUTTON_MAP)
+  {
+    pinMode(button.gpio, INPUT_PULLDOWN);
+  }
 
-    for (auto pin: PLAYER_LEDS) {
-      pinMode(pin, OUTPUT);
-    }
+  for (auto pin : PLAYER_LEDS)
+  {
+    pinMode(pin, OUTPUT);
+    digitalWrite(pin, HIGH);
+  }
 
-    // for(int i = 0; i < 3; i++) {
-    //   for (auto pin: PLAYER_LEDS) {
-    //     digitalWrite(pin, HIGH);
-    //   }
-    //   delay(300);
-    //   for (auto pin: PLAYER_LEDS) {
-    //     digitalWrite(pin, LOW);
-    //   }
-    //   delay(300);
-    // }
+  for (auto pin : PLAYER_LEDS)
+  {
+    digitalWrite(pin, LOW);
+    delay(200);
+    // digitalWrite(pin, HIGH);
+  }
 
-    // Whammy shenanigans
-    // pinMode(WHAMMY.gpio, ANALOG);
-    // analogReadResolution(12);
+  pinMode(WHAMMY_GPIO, ANALOG);
+  pinMode(BATTERY_GPIO, ANALOG);
+  analogReadResolution(12);
+  esp_sleep_enable_ext0_wakeup(POWER_BUTTON_GPIO, HIGH);
 
-    auto* config = new BleGamepadConfiguration();
+  auto *config = new BleGamepadConfiguration();
 
-    config->setAutoReport(false);
-    config->setControllerType(CONTROLLER_TYPE_GAMEPAD);
-    config->setButtonCount(20);
-    config->setAxesMax(4096);
-    config->setAxesMin(0);
-    config->setWhichAxes(true, true, true, true, false, false, false, false);
+  config->setAutoReport(false);
+  config->setControllerType(CONTROLLER_TYPE_GAMEPAD);
+  config->setButtonCount(20);
+  config->setAxesMax(4096);
+  config->setAxesMin(0);
+  config->setWhichAxes(true, true, true, true, false, false, false, false);
 
-    bleGamepad.deviceName = "GHLive Controller";
-    bleGamepad.begin(config);
-    // The default bleGamepad.begin() above enables 16 buttons, all axes, one hat, and no simulation controls or special buttons
+  bleGamepad.deviceName = "GHLive Controller";
+  bleGamepad.begin(config);
+  // The default bleGamepad.begin() above enables 16 buttons, all axes, one hat, and no simulation controls or special buttons
 }
 
 unsigned long lastBatteryCheck = 0;
 const auto batteryMin = 2.4;
 const auto batteryMax = 3.2;
 
+void tickBattery()
+{
+  unsigned long now = millis();
+  if (lastBatteryCheck + 1000 < now)
+  {
+    lastBatteryCheck = now;
+    // messed up wiring coming in handy I guess
+    float voltage = analogReadMilliVolts(BATTERY_GPIO) * (3.3 / 4095.0) * 2;
+    float percentage = (voltage - batteryMin) / (batteryMax - batteryMin) * 100;
+    bleGamepad.setBatteryLevel(constrain(percentage, 0, 100));
+  }
+}
+
+void flashLeds(uint16_t duration)
+{
+  const bool state = (millis() / duration) % 2;
+
+  for (auto led : PLAYER_LEDS)
+  {
+    digitalWrite(led, state);
+  }
+}
+
+unsigned long powerPressedSince = 0;
+void watchPowerButton()
+{
+  if (digitalRead(POWER_BUTTON_GPIO))
+  {
+    if (powerPressedSince == 0)
+    {
+      powerPressedSince = millis();
+    }
+    else if (millis() - powerPressedSince > 2000)
+    {
+      for (auto led : PLAYER_LEDS)
+      {
+        digitalWrite(led, LOW);
+      }
+      for (auto led : PLAYER_LEDS)
+      {
+        delay(300);
+        digitalWrite(led, HIGH);
+      }
+
+      powerPressedSince = 0;
+      digitalRead(POWER_BUTTON_GPIO); // sanity
+      esp_deep_sleep_start();
+    }
+  }
+  else
+  {
+    powerPressedSince = 0;
+  }
+}
+
 void loop()
 {
-    // unsigned long now = millis();
-    // if (lastBatteryCheck + 1000 < now) {
-    //   lastBatteryCheck = now;
-    //   // messed up wiring coming in handy I guess
-    //   float voltage = analogReadMilliVolts(WHAMMY.gpio) * (3.3 / 4095.0) * 2;
-    //   float percentage = (voltage - batteryMin) / (batteryMax - batteryMin) * 100;
-    //   bleGamepad.setBatteryLevel(constrain(percentage, 0, 100)); 
-    // }
+  if (bleGamepad.isConnected())
+  {
+    digitalWrite(PLAYER_LEDS[0], LOW);
+    digitalWrite(PLAYER_LEDS[1], HIGH);
+    digitalWrite(PLAYER_LEDS[2], HIGH);
+    digitalWrite(PLAYER_LEDS[3], HIGH);
 
-    if (bleGamepad.isConnected())
-    {
-        // digitalWrite(PLAYER_LEDS[0], HIGH);
-        monitorButtons();
-        // bleGamepad.setAxes(tickWhammy(analogRead(WHAMMY.gpio)), 0, 0, 0, 0, 0, 0, 0);
-        // bleGamepad.setAxes(analogReadMilliVolts(WHAMMY.gpio), 0, tickWhammy(analogRead(WHAMMY.gpio)), 0, 0, 0, 0, 0);
+    tickBattery();
+    tickButtons();
 
-        bleGamepad.sendReport();
-    }
+    bleGamepad.setAxes(analogRead(WHAMMY_GPIO), 0, 0, 0, 0, 0, 0, 0);
+    // bleGamepad.setAxes(analogReadMilliVolts(BATTERY_GPIO), analogRead(BATTERY_GPIO), analogRead(WHAMMY.gpio), analogReadMilliVolts(WHAMMY.gpio), 0, 0, 0, 0);
+
+    bleGamepad.sendReport();
+  }
+  else
+  {
+    flashLeds(400);
+  }
+  
+  watchPowerButton();
 }
