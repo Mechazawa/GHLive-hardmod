@@ -8,4 +8,4 @@ This repo is a work in progress
 todo:
  - [ ] Soldering Tutorial
  - [ ] Configuration guide
-       
+ - [ ] Split up code
