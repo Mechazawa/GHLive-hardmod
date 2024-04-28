@@ -83,7 +83,7 @@ void setup()
   auto *config = new BleGamepadConfiguration();
 
   config->setAutoReport(false);
-  config->setControllerType(CONTROLLER_TYPE_GAMEPAD);
+  // config->setControllerType(CONTROLLER_TYPE_GAMEPAD);
   config->setButtonCount(20);
   config->setAxesMax(4096);
   config->setAxesMin(0);
@@ -101,7 +101,6 @@ void setup()
 }
 
 unsigned long lastBatteryCheck = 0;
-uint8_t lastBatteryLevel = 100;
 const auto batteryMin = 2.4;
 const auto batteryMax = 3.2;
 
@@ -115,7 +114,7 @@ void tickBattery()
     float voltage = analogReadMilliVolts(BATTERY_GPIO) * (3.3 / 4095.0) * 2;
     float percentage = (voltage - batteryMin) / (batteryMax - batteryMin) * 100;
 
-    lastBatteryLevel = constrain(percentage, 0, 100);
+    bleGamepad.setBatteryLevel(constrain(percentage, 0, 100));
   }
 }
 
@@ -195,12 +194,10 @@ void loop()
     }
 
     bleGamepad.setAxes(analogRead(WHAMMY_GPIO), 0, 0, 0, 0, 0, 0, 0);
+    bleGamepad.sendReport();
   }
   else
   {
     flashLeds(400);
   }
-
-  bleGamepad.setBatteryLevel(lastBatteryLevel);
-  bleGamepad.sendReport();
 }
