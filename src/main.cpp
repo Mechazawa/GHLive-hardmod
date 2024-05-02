@@ -7,6 +7,7 @@
 #include <buttons.h>
 #include <NimBLEDevice.h>
 
+#define PLAYER_NUMBER 1
 #define INPUT_TIMEOUT (5 * 60 * 1000)
 #define BATTERY_MIN 2.4
 #define BATTERY_MAX 3.2
@@ -194,16 +195,22 @@ void setup()
   }
 }
 
+void setPlayerIndicator(int player) {
+  auto index = 0;
+
+  for (const auto pin : PLAYER_LEDS) {
+    digitalWrite(pin, index != player);
+    index++;
+  }
+}
+
 void loop()
 {
   watchPowerButton();
 
   if (bleGamepad.isConnected())
   {
-    digitalWrite(PLAYER_LEDS[0], LOW);
-    digitalWrite(PLAYER_LEDS[1], HIGH);
-    digitalWrite(PLAYER_LEDS[2], HIGH);
-    digitalWrite(PLAYER_LEDS[3], HIGH);
+    setPlayerIndicator(PLAYER_NUMBER - 1);
 
     tickBattery();
     tickInput();
