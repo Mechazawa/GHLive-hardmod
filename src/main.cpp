@@ -1,7 +1,3 @@
-/*
- * TODO: Clean up
- */
-
 #include <Arduino.h>
 #include <BleGamepad.h>
 #include <buttons.h>
