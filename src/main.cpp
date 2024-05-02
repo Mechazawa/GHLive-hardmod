@@ -9,6 +9,7 @@
 
 #define PLAYER_NUMBER 1
 #define INPUT_TIMEOUT (5 * 60 * 1000)
+#define BATTERY_REPORT_INTERVAL (5 * 1000)
 #define BATTERY_MIN 2.4
 #define BATTERY_MAX 3.2
 
@@ -54,7 +55,8 @@ bool tickButtons()
 void tickBattery()
 {
   unsigned long now = millis();
-  if (lastBatteryCheck + 1000 < now)
+
+  if (lastBatteryCheck == 0 || lastBatteryCheck + BATTERY_REPORT_INTERVAL < now)
   {
     lastBatteryCheck = now;
 
@@ -111,6 +113,15 @@ void flashLeds(uint16_t duration)
   for (auto led : PLAYER_LEDS)
   {
     digitalWrite(led, state);
+  }
+}
+
+void setPlayerIndicator(int player) {
+  auto index = 0;
+
+  for (const auto pin : PLAYER_LEDS) {
+    digitalWrite(pin, index != player);
+    index++;
   }
 }
 
@@ -181,7 +192,7 @@ void setup()
   config->setButtonCount(20);
   config->setAxesMax(4096);
   config->setAxesMin(0);
-  config->setWhichAxes(true, true, true, true, false, false, false, false);
+  config->setWhichAxes(true, true, false, false, false, false, false, false);
   config->setSoftwareRevision((char *)"1");
   config->setSerialNumber((char *)"GHLCH0001");
 
@@ -195,30 +206,21 @@ void setup()
   }
 }
 
-void setPlayerIndicator(int player) {
-  auto index = 0;
-
-  for (const auto pin : PLAYER_LEDS) {
-    digitalWrite(pin, index != player);
-    index++;
-  }
-}
-
 void loop()
 {
   watchPowerButton();
 
+  tickBattery();
+  tickInput();
+
   if (bleGamepad.isConnected())
   {
     setPlayerIndicator(PLAYER_NUMBER - 1);
-
-    tickBattery();
-    tickInput();
-
-    bleGamepad.sendReport();
   }
   else
   {
     flashLeds(400);
   }
+
+  bleGamepad.sendReport();
 }
