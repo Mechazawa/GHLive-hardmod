@@ -14,8 +14,8 @@ Modify the `BUTTON_MAP` array in `buttons.h` to change the GPIO pins associated 
 Example:
 ```c
 const ButtonDef BUTTON_MAP[] = {
-    {BUTTON_1, GPIO_NUM_14}, // W1
-    {BUTTON_2, GPIO_NUM_9},  // W2
+    {BUTTON_1, GPIO_NUM_14},
+    {BUTTON_2, GPIO_NUM_9},
     // Add or modify entries as needed
 };
 ```
