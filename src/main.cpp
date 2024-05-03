@@ -1,4 +1,5 @@
 #include <Arduino.h>
+#include <Preferences.h>
 #include <BleGamepad.h>
 #include <buttons.h>
 #include <NimBLEDevice.h>
@@ -15,6 +16,7 @@ unsigned long lastInput = 0;
 
 BleGamepad bleGamepad;
 
+String getSerial();
 void watchPowerButton();
 void shutdown();
 void disconnect();
@@ -22,6 +24,33 @@ void flashLeds(uint16_t duration);
 void tickInput();
 void tickBattery();
 bool tickButtons();
+
+String getSerial() {
+  Preferences preferences;
+
+  preferences.begin("gamepad");
+
+  String serial;
+
+  if (preferences.isKey("serial")) {
+    serial = preferences.getString("serial");
+  } else {
+    static const char alphanum[] =
+      "0123456789"
+      "ABCDEFGHIJKLMNOPQRSTUVWXYZ"
+      "abcdefghijklmnopqrstuvwxyz";
+
+    for (int i = 0; i < 6; ++i) {
+      serial += alphanum[random(strlen(alphanum) - 1)];
+    }
+
+    preferences.putString("serial", serial);
+  }
+
+  preferences.end();
+
+  return "GHLiveController-" + serial;
+}
 
 bool tickButtons()
 {
@@ -190,7 +219,7 @@ void setup()
   config->setAxesMin(0);
   config->setWhichAxes(true, true, false, false, false, false, false, false);
   config->setSoftwareRevision((char *)"1");
-  config->setSerialNumber((char *)"GHLCH0001");
+  config->setSerialNumber(const_cast<char*>(getSerial().c_str()));
 
   bleGamepad.deviceName = "GHLive Controller";
 
