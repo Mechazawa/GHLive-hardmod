@@ -15,6 +15,7 @@ It allows the controller to use Bluetooth to connect to games like Clone Hero, e
  - You can use any ESP32 with enough pins
  - [Wemos S3 Mini](https://www.tinytronics.nl/en/development-boards/microcontroller-boards/with-wi-fi/wemos-s3-mini-esp32-s3-v1.0.0)
  - D1 mini ESP-WROOM-32
+- [ESP32 board](https://www.tinytronics.nl/en/development-boards/microcontroller-boards/with-wi-fi/wemos-s3-mini-esp32-s3-v1.0.0)
 - [Guitar Hero Live controller](https://www.ebay.com/sch/i.html?_from=R40&_nkw=guitar+hero+live+contoller)
 - [Basic soldering tools and skills](https://europe1.discourse-cdn.com/arduino/original/4X/6/5/f/65f9108b9d4b0c8300aa1e1ce5d76e2f1940d1ef.jpeg)
 - [PlatformIO IDE](https://platformio.org)
@@ -25,5 +26,10 @@ It allows the controller to use Bluetooth to connect to games like Clone Hero, e
 3. Build and upload the firmware to your ESP32.
 
 ### Assembly
+Following the defined pins in `buttons.h` should be enough to wire up the guitar.
+Keep in mind that all signals are `INPUT_PULLDOWN`, meaning that some PCBs need to have their ground wired to 3.3 volts.
+Asside from the power button and the whammy it does not matter what GPIO the buttons are wired to.
+Also you'll need a resistor for the LEDs (1KΩ should be fine) and a voltage divider for the battery level monitoring. 
+For the battery level 2MΩ and 800KΩ seemed to do the job for me.
 
-A step-by-step walthrough on how to assemble and solder this project can be found [here](ASSEMBLY.md)
+I highly recommend replacing the exising ribbon cables with your own wiring to make solding a lot easier. 
