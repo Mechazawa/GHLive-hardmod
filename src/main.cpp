@@ -3,6 +3,11 @@
 #include <buttons.h>
 #include <NimBLEDevice.h>
 
+#ifdef WEMOS_D1_MINI32
+#include "soc/soc.h"
+#include "soc/rtc_cntl_reg.h"
+#endif
+
 #define PLAYER_NUMBER 1
 #define INPUT_TIMEOUT (5 * 60 * 1000)
 #define BATTERY_REPORT_INTERVAL (5 * 1000)
@@ -163,6 +168,10 @@ void shutdown()
 
 void setup()
 {
+  #ifdef WEMOS_D1_MINI32
+  WRITE_PERI_REG(RTC_CNTL_BROWN_OUT_REG, 0); //disable   detector
+  #endif
+
   for (auto button : BUTTON_MAP)
   {
     pinMode(button.gpio, INPUT_PULLDOWN);

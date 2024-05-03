@@ -11,8 +11,10 @@ It allows the controller to use Bluetooth to connect to games like Clone Hero, e
 
 ## Getting Started
 ### Requirements
-- [ESP32 board](https://www.tinytronics.nl/en/development-boards/microcontroller-boards/with-wi-fi/wemos-s3-mini-esp32-s3-v1.0.0)
+- ESP32 board
  - You can use any ESP32 with enough pins
+ - [Wemos S3 Mini](https://www.tinytronics.nl/en/development-boards/microcontroller-boards/with-wi-fi/wemos-s3-mini-esp32-s3-v1.0.0)
+ - D1 mini ESP-WROOM-32
 - [Guitar Hero Live controller](https://www.ebay.com/sch/i.html?_from=R40&_nkw=guitar+hero+live+contoller)
 - [Basic soldering tools and skills](https://europe1.discourse-cdn.com/arduino/original/4X/6/5/f/65f9108b9d4b0c8300aa1e1ce5d76e2f1940d1ef.jpeg)
 - [PlatformIO IDE](https://platformio.org)

@@ -7,6 +7,8 @@ typedef struct
     gpio_num_t gpio;
 } ButtonDef;
 
+
+#ifdef LOLIN_S3_MINI
 #define DISCONNECT_BUTTON GPIO_NUM_1
 #define POWER_BUTTON_GPIO GPIO_NUM_4
 #define BATTERY_GPIO GPIO_NUM_16
@@ -39,3 +41,26 @@ const ButtonDef BUTTON_MAP[] = {
     {BUTTON_16, GPIO_NUM_15},
     {BUTTON_7, GPIO_NUM_18},
 };
+
+#elif defined(WEMOS_D1_MINI32)
+#define DISCONNECT_BUTTON GPIO_NUM_5
+#define POWER_BUTTON_GPIO GPIO_NUM_4
+#define BATTERY_GPIO GPIO_NUM_16
+#define WHAMMY_GPIO GPIO_NUM_25
+
+const gpio_num_t PLAYER_LEDS[] = {
+    GPIO_NUM_34, 
+    GPIO_NUM_35, 
+    GPIO_NUM_33, 
+    GPIO_NUM_19
+};
+
+const ButtonDef BUTTON_MAP[] = {
+    {BUTTON_1, GPIO_NUM_5},
+    {BUTTON_2, GPIO_NUM_23},
+    {BUTTON_3, GPIO_NUM_18},
+    {BUTTON_4, GPIO_NUM_26}
+};
+#else 
+#error You need to configure the button mapping
+#endif
