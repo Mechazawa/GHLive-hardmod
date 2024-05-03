@@ -25,3 +25,7 @@ It allows the controller to use Bluetooth to connect to games like Clone Hero, e
 Following the defined pins in `buttons.h` should be enough to wire up the guitar.
 Keep in mind that all signals are `INPUT_PULLDOWN`, meaning that some PCBs need to have their ground wired to 3.3 volts.
 Asside from the power button and the whammy it does not matter what GPIO the buttons are wired to.
+Also you'll need a resistor for the LEDs (1KΩ should be fine) and a voltage divider for the battery level monitoring. 
+For the battery level 2MΩ and 800KΩ seemed to do the job for me.
+
+I highly recommend replacing the exising ribbon cables with your own wiring to make solding a lot easier. 
