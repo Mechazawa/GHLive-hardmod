@@ -1,0 +1,18 @@
+{
+  "files.associations": {
+    "new": "cpp",
+    "atomic": "cpp",
+    "cstdint": "cpp",
+    "*.tcc": "cpp",
+    "cstdio": "cpp",
+    "array": "cpp",
+    "deque": "cpp",
+    "list": "cpp",
+    "string": "cpp",
+    "unordered_map": "cpp",
+    "unordered_set": "cpp",
+    "vector": "cpp",
+    "string_view": "cpp",
+    "initializer_list": "cpp"
+  }
+}
