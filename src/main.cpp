@@ -1,9 +1,10 @@
 #include <Arduino.h>
+#include <Preferences.h>
 #include <BleGamepad.h>
 #include <buttons.h>
 #include <NimBLEDevice.h>
+#include <ButtonMonitor.hpp>
 
-#define PLAYER_NUMBER 1
 #define INPUT_TIMEOUT (5 * 60 * 1000)
 #define BATTERY_REPORT_INTERVAL (5 * 1000)
 #define BATTERY_MIN 2.4
@@ -12,9 +13,12 @@
 unsigned long lastBatteryCheck = 0;
 unsigned long powerPressedSince = 0;
 unsigned long lastInput = 0;
+unsigned char playerNumber = 1;
 
 BleGamepad bleGamepad;
+Preferences preferences;
 
+String getSerial();
 void watchPowerButton();
 void shutdown();
 void disconnect();
@@ -22,6 +26,28 @@ void flashLeds(uint16_t duration);
 void tickInput();
 void tickBattery();
 bool tickButtons();
+
+String getSerial() {
+
+  String serial;
+
+  if (preferences.isKey("serial")) {
+    serial = preferences.getString("serial");
+  } else {
+    static const char alphanum[] =
+      "0123456789"
+      "ABCDEFGHIJKLMNOPQRSTUVWXYZ"
+      "abcdefghijklmnopqrstuvwxyz";
+
+    for (int i = 0; i < 6; ++i) {
+      serial += alphanum[random(strlen(alphanum) - 1)];
+    }
+
+    preferences.putString("serial", serial);
+  }
+
+  return "GHLiveController-" + serial;
+}
 
 bool tickButtons()
 {
@@ -80,26 +106,6 @@ void tickInput()
   }
 
   bleGamepad.setAxes(analogRead(WHAMMY_GPIO), 0, 0, 0, 0, 0, 0, 0);
-}
-
-void watchPowerButton()
-{
-  if (digitalRead(POWER_BUTTON_GPIO))
-  {
-    if (powerPressedSince == 0)
-    {
-      powerPressedSince = millis();
-    }
-    else if (millis() - powerPressedSince > 2000)
-    {
-      powerPressedSince = 0;
-      shutdown();
-    }
-  }
-  else
-  {
-    powerPressedSince = 0;
-  }
 }
 
 void flashLeds(uint16_t duration)
@@ -163,6 +169,8 @@ void shutdown()
 
 void setup()
 {
+  preferences.begin("gamepad");
+
   for (auto button : BUTTON_MAP)
   {
     pinMode(button.gpio, INPUT_PULLDOWN);
@@ -190,11 +198,13 @@ void setup()
   config->setAxesMin(0);
   config->setWhichAxes(true, true, false, false, false, false, false, false);
   config->setSoftwareRevision((char *)"1");
-  config->setSerialNumber((char *)"GHLCH0001");
+  config->setSerialNumber(const_cast<char*>(getSerial().c_str()));
 
   bleGamepad.deviceName = "GHLive Controller";
 
   bleGamepad.begin(config);
+
+  playerNumber = preferences.getUChar("player");
 
   if (digitalRead(DISCONNECT_BUTTON))
   {
@@ -202,16 +212,31 @@ void setup()
   }
 }
 
+void nextPlayer() {
+  playerNumber = (playerNumber + 1) / (sizeof(PLAYER_LEDS) / sizeof(gpio_num_t));
+
+  preferences.putUChar("player", playerNumber);
+}
+
+ButtonMonitor monitoredButtons[] = {
+  ButtonMonitor(POWER_BUTTON_GPIO, 2000, false, shutdown),
+  ButtonMonitor(DISCONNECT_BUTTON, 1000, true, nextPlayer),
+};
+
 void loop()
 {
-  watchPowerButton();
+  unsigned long ms = millis();
+
+  for (auto button: monitoredButtons) {
+    button.tick(ms);
+  }
 
   tickBattery();
   tickInput();
 
   if (bleGamepad.isConnected())
   {
-    setPlayerIndicator(PLAYER_NUMBER - 1);
+    setPlayerIndicator(playerNumber);
   }
   else
   {
