@@ -21,13 +21,13 @@ const gpio_num_t PLAYER_LEDS[] = {
 
 const ButtonDef BUTTON_MAP[] = {
     {BUTTON_1, GPIO_NUM_2},  // W1
-    {BUTTON_2, GPIO_NUM_0},  // W2
+    {BUTTON_2, GPIO_NUM_27}, // W2
     {BUTTON_3, GPIO_NUM_4},  // W3
     {BUTTON_4, GPIO_NUM_32}, // B1
     {BUTTON_5, GPIO_NUM_21}, // B2
     {BUTTON_6, GPIO_NUM_22}, // B3
 
-    {BUTTON_8, DISCONNECT_BUTTON}, // VB
+    {BUTTON_8, DISCONNECT_BUTTON}, // GH button
     {BUTTON_9, GPIO_NUM_18},       // Start
     {BUTTON_10, GPIO_NUM_26},      // Select
     {BUTTON_11, POWER_BUTTON_GPIO},
