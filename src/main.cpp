@@ -74,6 +74,7 @@ bool tickButtons()
   return changedState;
 }
 
+#ifdef BATTERY_GPIO
 void tickBattery()
 {
   unsigned long now = millis();
@@ -88,6 +89,7 @@ void tickBattery()
     bleGamepad.setBatteryLevel(constrain(percentage, 0, 100));
   }
 }
+#endif
 
 void tickInput()
 {
@@ -184,7 +186,10 @@ void setup()
   }
 
   pinMode(WHAMMY_GPIO, ANALOG);
+
+  #ifdef BATTERY_GPIO
   pinMode(BATTERY_GPIO, ANALOG);
+  #endif
 
   esp_sleep_enable_ext0_wakeup(POWER_BUTTON_GPIO, HIGH);
 
@@ -231,7 +236,10 @@ void loop()
     button.tick(ms);
   }
 
+  #ifdef BATTERY_GPIO
   tickBattery();
+  #endif
+  
   tickInput();
 
   if (bleGamepad.isConnected())
