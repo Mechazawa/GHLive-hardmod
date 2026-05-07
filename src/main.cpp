@@ -2,7 +2,6 @@
 #include <Preferences.h>
 #include <BleGamepad.h>
 #include <buttons.h>
-#include <NimBLEDevice.h>
 #include <ButtonMonitor.hpp>
 
 #define INPUT_TIMEOUT (5 * 60 * 1000)
@@ -15,7 +14,7 @@ unsigned long powerPressedSince = 0;
 unsigned long lastInput = 0;
 unsigned char playerNumber = 1;
 
-BleGamepad bleGamepad;
+BleGamepad bleGamepad("GHLive Controller");
 Preferences preferences;
 
 String getSerial();
@@ -27,7 +26,8 @@ void tickInput();
 void tickBattery();
 bool tickButtons();
 
-String getSerial() {
+String getSerial()
+{
 
   String serial;
 
@@ -35,9 +35,9 @@ String getSerial() {
     serial = preferences.getString("serial");
   } else {
     static const char alphanum[] =
-      "0123456789"
-      "ABCDEFGHIJKLMNOPQRSTUVWXYZ"
-      "abcdefghijklmnopqrstuvwxyz";
+        "0123456789"
+        "ABCDEFGHIJKLMNOPQRSTUVWXYZ"
+        "abcdefghijklmnopqrstuvwxyz";
 
     for (int i = 0; i < 6; ++i) {
       serial += alphanum[random(strlen(alphanum) - 1)];
@@ -53,18 +53,14 @@ bool tickButtons()
 {
   bool changedState = false;
 
-  for (auto button : BUTTON_MAP)
-  {
+  for (auto button : BUTTON_MAP) {
     auto pressed = digitalRead(button.gpio);
 
-    if (pressed && !bleGamepad.isPressed(button.gamepad))
-    {
+    if (pressed && !bleGamepad.isPressed(button.gamepad)) {
       bleGamepad.press(button.gamepad);
 
       changedState = true;
-    }
-    else if (!pressed && bleGamepad.isPressed(button.gamepad))
-    {
+    } else if (!pressed && bleGamepad.isPressed(button.gamepad)) {
       bleGamepad.release(button.gamepad);
 
       changedState = true;
@@ -79,8 +75,7 @@ void tickBattery()
 {
   unsigned long now = millis();
 
-  if (lastBatteryCheck == 0 || lastBatteryCheck + BATTERY_REPORT_INTERVAL < now)
-  {
+  if (lastBatteryCheck == 0 || lastBatteryCheck + BATTERY_REPORT_INTERVAL < now) {
     lastBatteryCheck = now;
 
     const float voltage = analogReadMilliVolts(BATTERY_GPIO) * (3.3 / 4095.0) * 2;
@@ -93,15 +88,11 @@ void tickBattery()
 
 void tickInput()
 {
-  if (tickButtons() || lastInput == 0)
-  {
+  if (tickButtons() || lastInput == 0) {
     lastInput = millis();
-  }
-  else
-  {
+  } else {
     const auto now = millis();
-    if (now - lastInput > INPUT_TIMEOUT)
-    {
+    if (now - lastInput > INPUT_TIMEOUT) {
       lastInput = 0;
       shutdown();
     }
@@ -114,13 +105,13 @@ void flashLeds(uint16_t duration)
 {
   const bool state = (millis() / duration) % 2;
 
-  for (auto led : PLAYER_LEDS)
-  {
+  for (auto led : PLAYER_LEDS) {
     digitalWrite(led, state);
   }
 }
 
-void setPlayerIndicator(int player) {
+void setPlayerIndicator(int player)
+{
   auto index = 0;
 
   for (const auto pin : PLAYER_LEDS) {
@@ -131,37 +122,22 @@ void setPlayerIndicator(int player) {
 
 void disconnect()
 {
-  for (char i = 0; i < 20; i++)
-  {
+  for (char i = 0; i < 20; i++) {
     delay(100);
-    for (auto led : PLAYER_LEDS)
-    {
+    for (auto led : PLAYER_LEDS) {
       digitalWrite(led, i % 2);
     }
   }
 
-  NimBLEDevice::deleteAllBonds();
-
-  auto clients = NimBLEDevice::getClientList();
-
-  for (auto client : *clients)
-  {
-    NimBLEDevice::deleteClient(client);
-  }
-
-  NimBLEDevice::deleteAllBonds();
-
-  esp_restart();
+  bleGamepad.deleteAllBonds(true);
 }
 
 void shutdown()
 {
-  for (auto led : PLAYER_LEDS)
-  {
+  for (auto led : PLAYER_LEDS) {
     digitalWrite(led, LOW);
   }
-  for (auto led : PLAYER_LEDS)
-  {
+  for (auto led : PLAYER_LEDS) {
     delay(300);
     digitalWrite(led, HIGH);
   }
@@ -173,13 +149,11 @@ void setup()
 {
   preferences.begin("gamepad");
 
-  for (auto button : BUTTON_MAP)
-  {
+  for (auto button : BUTTON_MAP) {
     pinMode(button.gpio, INPUT_PULLDOWN);
   }
 
-  for (auto pin : PLAYER_LEDS)
-  {
+  for (auto pin : PLAYER_LEDS) {
     pinMode(pin, OUTPUT);
     digitalWrite(pin, LOW);
     delay(200);
@@ -187,9 +161,9 @@ void setup()
 
   pinMode(WHAMMY_GPIO, ANALOG);
 
-  #ifdef BATTERY_GPIO
+#ifdef BATTERY_GPIO
   pinMode(BATTERY_GPIO, ANALOG);
-  #endif
+#endif
 
   esp_sleep_enable_ext0_wakeup(POWER_BUTTON_GPIO, HIGH);
 
@@ -203,51 +177,46 @@ void setup()
   config->setAxesMin(0);
   config->setWhichAxes(true, true, false, false, false, false, false, false);
   config->setSoftwareRevision((char *)"1");
-  config->setSerialNumber(const_cast<char*>(getSerial().c_str()));
-
-  bleGamepad.deviceName = "GHLive Controller";
+  config->setSerialNumber(const_cast<char *>(getSerial().c_str()));
 
   bleGamepad.begin(config);
 
   playerNumber = preferences.getUChar("player");
 
-  if (digitalRead(DISCONNECT_BUTTON))
-  {
+  if (digitalRead(DISCONNECT_BUTTON)) {
     disconnect();
   }
 }
 
-void nextPlayer() {
+void nextPlayer()
+{
   playerNumber = (playerNumber + 1) / (sizeof(PLAYER_LEDS) / sizeof(gpio_num_t));
 
   preferences.putUChar("player", playerNumber);
 }
 
 ButtonMonitor monitoredButtons[] = {
-  ButtonMonitor(POWER_BUTTON_GPIO, 2000, false, shutdown),
-  ButtonMonitor(DISCONNECT_BUTTON, 1000, true, nextPlayer),
+    ButtonMonitor(POWER_BUTTON_GPIO, 2000, false, shutdown),
+    ButtonMonitor(DISCONNECT_BUTTON, 1000, true, nextPlayer),
 };
 
 void loop()
 {
   unsigned long ms = millis();
 
-  for (auto button: monitoredButtons) {
+  for (auto button : monitoredButtons) {
     button.tick(ms);
   }
 
-  #ifdef BATTERY_GPIO
+#ifdef BATTERY_GPIO
   tickBattery();
-  #endif
-  
+#endif
+
   tickInput();
 
-  if (bleGamepad.isConnected())
-  {
+  if (bleGamepad.isConnected()) {
     setPlayerIndicator(playerNumber);
-  }
-  else
-  {
+  } else {
     flashLeds(400);
   }
 
